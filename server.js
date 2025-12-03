@@ -38,20 +38,10 @@ const getKaohsiungWeather = async (req, res) => {
       {
         params: {
           Authorization: CWA_API_KEY,
-          locationName: "新北市",
+          locationName: "高雄市",
         },
       }
     );
-
-    // 取得高雄市的天氣資料
-    const locationData = response.data.records.location[0];
-
-    if (!locationData) {
-      return res.status(404).json({
-        error: "查無資料",
-        message: "無法取得高雄市天氣資料",
-      });
-    }
 
     // 整理天氣資料
     const weatherData = {
@@ -127,15 +117,6 @@ const getKaohsiungWeather = async (req, res) => {
   }
 };
 // 取得指定縣市天氣
-app.get("/api/weather/:city", async (req, res) => {
-  const cityName = req.params.city; // 取得路由參數
-  try {
-    if (!CWA_API_KEY) {
-      return res.status(500).json({
-        error: "伺服器設定錯誤",
-        message: "請在 .env 設定 CWA_API_KEY",
-      });
-    }
 
     const response = await axios.get(
       `${CWA_API_BASE_URL}/v1/rest/datastore/F-C0032-001`,
@@ -197,11 +178,21 @@ app.get("/api/weather/:city", async (req, res) => {
 });
 
 // Routes
+app.get("/api/weather/:city", async (req, res) => {
+  const cityName = req.params.city; // 取得路由參數
+  try {
+    if (!CWA_API_KEY) {
+      return res.status(500).json({
+        error: "伺服器設定錯誤",
+        message: "請在 .env 設定 CWA_API_KEY",
+      });
+    }
+
 app.get("/", (req, res) => {
   res.json({
     message: "歡迎使用 CWA 天氣預報 API",
     endpoints: {
-      kaohsiung: "/api/weather/kaohsiung",
+      :city: "/api/weather/:city",
       health: "/api/health",
     },
   });
@@ -212,7 +203,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // 取得高雄天氣預報
-app.get("/api/weather/kaohsiung", getKaohsiungWeather);
+app.get("/api/weather/:city", get${cityName}Weather);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
