@@ -90,6 +90,26 @@ const getWeather = async (req, res) => {
 };
 
 // Routes
+app.get("/weather", async (req, res) => {
+    try {
+        const city = req.query.city || "臺北市";
+        const response = await axios.get(`${CWA_API_BASE_URL}/v1/rest/datastore/F-C0032-001?Authorization=${CWA_API_KEY}&locationName=${encodeURIComponent(city)}`);
+
+        const record = response.data.records.location[0];
+        const weatherElement = record.weatherElement;
+        const weather = weatherElement[0].time[0].parameter.parameterName;
+        const temp = weatherElement[2].time[0].parameter.parameterName;
+
+        res.json({
+            location: record.locationName,
+            weather: weather,
+            temperature: temp
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch weather data" });
+    }
+});
+
 app.get("/api/weather/:city", getWeather);
 
 app.get("/", (req, res) => {
