@@ -203,7 +203,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // 取得高雄天氣預報
-app.get("/api/weather/:city", get${cityName}Weather);
+app.get("/api/weather/:city", getWeather);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
