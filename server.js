@@ -52,63 +52,54 @@ const getWeather = async (req, res) => {
     };
 
     locationData.weatherElement[0].time.forEach((_, i) => {
-      const forecast = {};
-      locationData.weatherElement.forEach((element) => {
-        const value = element.time[i].parameter;
-        switch (element.elementName) {
-          case "Wx":
-            forecast.weather = value.parameterName;
-            break;
-          case "PoP":
-            forecast.rain = value.parameterName + "%";
-            break;
-          case "MinT":
-            forecast.minTemp = value.parameterName + "°C";
-            break;
-          case "MaxT":
-            forecast.maxTemp = value.parameterName + "°C";
-            break;
-          case "CI":
-            forecast.comfort = value.parameterName;
-            break;
-          case "WS":
-            forecast.windSpeed = value.parameterName;
-            break;
-        }
-      });
-      weatherData.forecasts.push(forecast);
-    });
+// --- [原始程式碼行數 85-118 區塊的替換] ---
 
-    res.json({ success: true, data: weatherData });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: "取得天氣資料失敗",
-      message: err.message,
-    });
-  }
-};
+    // 取得時間序列，這是所有 weatherElement 共享的
+    const timeElements = locationData.weatherElement[0].time;
 
-// Routes
-app.get("/weather", async (req, res) => {
-    try {
-        const city = req.query.city || "臺北市";
-        const response = await axios.get(`${CWA_API_BASE_URL}/v1/rest/datastore/F-C0032-001?Authorization=${CWA_API_KEY}&locationName=${encodeURIComponent(city)}`);
-
-        const record = response.data.records.location[0];
-        const weatherElement = record.weatherElement;
-        const weather = weatherElement[0].time[0].parameter.parameterName;
-        const temp = weatherElement[2].time[0].parameter.parameterName;
-
-        res.json({
-            location: record.locationName,
-            weather: weather,
-            temperature: temp
+    // 遍歷所有預報時段
+    timeElements.forEach((timePeriod, i) => {
+        const forecast = {};
+        
+        // 🌟 關鍵修正：將 startTime 和 endTime 加入 forecast 物件
+        forecast.startTime = timePeriod.startTime; 
+        forecast.endTime = timePeriod.endTime;
+        
+        // 遍歷所有天氣元素，並將其值加入 forecast 物件
+        locationData.weatherElement.forEach((element) => {
+            // 確保該元素在當前時間點 i 有資料
+            if (element.time && element.time[i] && element.time[i].parameter) {
+                const value = element.time[i].parameter;
+                switch (element.elementName) {
+                    case "Wx": // 天氣現象
+                        forecast.weather = value.parameterName;
+                        break;
+                    case "PoP": // 降雨機率
+                        forecast.rain = value.parameterName + "%";
+                        break;
+                    case "MinT": // 最低溫度
+                        forecast.minTemp = value.parameterName;
+                        break;
+                    case "MaxT": // 最高溫度
+                        forecast.maxTemp = value.parameterName;
+                        break;
+                    case "CI": // 舒適度
+                        forecast.comfort = value.parameterName;
+                        break;
+                    case "WS": // 風速
+                        forecast.windSpeed = value.parameterName;
+                        break;
+                }
+            }
         });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch weather data" });
-    }
-});
+        
+        // 確保溫度單位 (前端需要純數字，我們在前端處理 °C)
+        if (forecast.minTemp) forecast.minTemp = forecast.minTemp.replace("°C", "");
+        if (forecast.maxTemp) forecast.maxTemp = forecast.maxTemp.replace("°C", "");
+        
+        weatherData.forecasts.push(forecast);
+    });
+// --- [替換結束] ---
 
 app.get("/api/weather/:city", getWeather);
 
